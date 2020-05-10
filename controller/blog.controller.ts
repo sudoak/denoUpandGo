@@ -1,50 +1,68 @@
 // @ts-ignore
-import { HandlerFunc, Context } from "https://deno.land/x/abc@v0.2.9/mod.ts";
-import db from '../config/db.config.ts';
+import { Request, Response } from "https://deno.land/x/oak/mod.ts";
+import db  from '../config/db.config.ts';
 
-const database = db.getDatabase;
-const blogs = database.collection('blogs');
+const blogs = db.collection('blogs');
 
 interface Employee {
   _id: {
-    $oid: string;
+    $oid: String;
   };
   title: String,
   desc: String,
 }
 
-export const createBlog: HandlerFunc = async (c: Context) => {
+export default  async (
+    { request,
+    response
+    } : {
+    request: Request;
+    response: Response;
+  }) => {
     try {
-        const body = await (c.body());
-        if (!Object.keys(body).length) {
-            return c.string("Request body can not be empty!", 400);
+        if (request.hasBody) {
+            response.status = 400;
+            response.body = {error: "No Body"}
+            return;
          }
-         const { title, desc } = body;
+         const {value : {title, desc}} = await request.body();
+        //  const { title, desc } = body;
         
     const insertedBlog = await blogs.insertOne({
         title,
         desc
     });
-    return c.json(insertedBlog, 201);
+    response.body = insertedBlog;
+    return;
     } catch (error) {
-        return c.json(error, 500);
+        response.status = 500
+        response.body = error;
+        return;
     }
 }
 
-export const fetchAllBlogs: HandlerFunc = async (c: Context) => {
-    try {
-        const fetchedBlogs: Employee[] = await blogs.find();
+// export const fetchAllBlogs = async ( { request,
+//     response
+//     } : {
+//     request: Request;
+//     response: Response;
+//   }) => {
+//     try {
+//         const fetchedBlogs: Employee[] = await blogs.find();
 
-    if (fetchedBlogs) {
-      const list = fetchedBlogs.length ? fetchedBlogs.map(blog => {
-        const { _id: { $oid }, title, desc } = blog;
-        return { id: $oid, title, desc };
-      })
-        :
-        [];
-      return c.json(list, 200);
-    }
-    } catch (error) {
-        return c.json(error, 500);
-    }
-} 
+//     if (fetchedBlogs) {
+//       const list = fetchedBlogs.length ? fetchedBlogs.map(blog => {
+//         const { _id: { $oid }, title, desc } = blog;
+//         return { id: $oid, title, desc };
+//       })
+//         :
+//         [];
+//       response.body = list;
+//       return
+//     }
+//     } catch (error) {
+//         response.status = 500
+//         response.body = error;
+//         return;
+//     }
+// } 

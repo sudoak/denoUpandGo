@@ -1,12 +1,21 @@
-import { Application } from "https://deno.land/x/abc@v0.2.9/mod.ts";
+import { Application, Router } from "https://deno.land/x/oak/mod.ts";
 
-import {fetchAllBlogs, createBlog} from "./controller/blog.controller.ts";
+import  createBlog from "./controller/blog.controller.ts";
 
-const app = new Application();
+const router = new Router();
 
-app
-.get('/blogs', fetchAllBlogs)
-.post('/blogs', createBlog)
-.start({port:5000});
+const checkFunc = (ctx: any) => {
+    ctx.response.body = "Hello world lol!";
+}
+router
+  .get("/",checkFunc)
+//   .get("/blogs", fetchAllBlogs)
+  .post("/blogs", createBlog);
 
-console.log(`server listening on http://localhost:5000`);
+  const app = new Application();
+  app.use(router.routes());
+//   app.use(router.allowedMethods());
+  
+  await app.listen({ port: 8000 });
+
+  console.log("server running")
